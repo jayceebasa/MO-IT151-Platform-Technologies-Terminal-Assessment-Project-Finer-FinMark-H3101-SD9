@@ -98,45 +98,42 @@
     </div>
 
  <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const messageDiv = document.getElementById('message');
-            
-            try {
-                const response = await fetch('/auth/api/login/', {  // Relative URL
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Store tokens in localStorage
-                    localStorage.setItem('access_token', data.access);
-                    localStorage.setItem('refresh_token', data.refresh);
-                    
-                    messageDiv.innerHTML = '<div class="message success">Login successful! Redirecting...</div>';
-                    
-                    // Redirect to dashboard after 2 seconds
-                    setTimeout(() => {
-                        window.location.href = '/auth/dashboard/';
-                    }, 2000);
-                } else {
-                    messageDiv.innerHTML = '<div class="message error">' + (data.error || 'Login failed. Please check your credentials.') + '</div>';
-                }
-            } catch (error) {
-                messageDiv.innerHTML = '<div class="message error">Network error. Please try again.</div>';
-            }
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const messageDiv = document.getElementById('message');
+    
+    try {
+        const response = await fetch('/auth/api/login/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            }),
+            credentials: 'include' // Important: includes cookies in requests
         });
-    </script>
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            messageDiv.innerHTML = '<div class="message success">Login successful! Redirecting...</div>';
+            
+            // No need to store tokens manually - they're in HttpOnly cookies
+            setTimeout(() => {
+                window.location.href = '/auth/dashboard/';
+            }, 2000);
+        } else {
+            messageDiv.innerHTML = '<div class="message error">' + (data.error || 'Login failed. Please check your credentials.') + '</div>';
+        }
+    } catch (error) {
+        messageDiv.innerHTML = '<div class="message error">Network error. Please try again.</div>';
+    }
+});
+</script>
 </body>
 </html>

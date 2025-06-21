@@ -45,18 +45,49 @@
         <div id="userInfo"></div>
     </div>
 
-    <script>
-        // Check if user is logged in
-        const accessToken = localStorage.getItem('access_token');
-        if (!accessToken) {
+<script>
+    // Check if user is logged in by making a request to a protected endpoint
+    // Since tokens are in HttpOnly cookies, we can't access them directly from JavaScript
+    
+    async function checkAuth() {
+        try {
+            const response = await fetch('/auth/api/check-auth/', {
+                method: 'GET',
+                credentials: 'include' // Include cookies with the request
+            });
+            
+            if (!response.ok) {
+                // User is not authenticated, redirect to login
+                window.location.href = '/auth/login/';
+            } else {
+                // User is authenticated, get user info
+                const userData = await response.json();
+                document.getElementById('userInfo').innerHTML = 
+                    `<p>Welcome back, <strong>${userData.username}</strong>!</p>`;
+            }
+        } catch (error) {
+            // Network error or server error, redirect to login
             window.location.href = '/auth/login/';
         }
+    }
 
-        function logout() {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            window.location.href = 'login.html';
+    // Check authentication on page load
+    checkAuth();
+
+    async function logout() {
+        try {
+            // Call logout endpoint to clear server-side session/cookies
+            await fetch('/auth/api/logout/', {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.log('Logout request failed, but redirecting anyway');
         }
-    </script>
+        
+        // Redirect to login page
+        window.location.href = '/auth/login/';
+    }
+</script>
 </body>
 </html>
