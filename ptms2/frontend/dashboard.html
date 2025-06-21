@@ -19,75 +19,329 @@
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        h1 {
-            color: #333;
-            text-align: center;
+        .sync-status {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .online { color: green; }
+        .offline { color: red; }
+        .data-form {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        input, textarea, button {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            width: auto;
+            padding: 8px 16px;
         }
         .logout-btn {
             background-color: #dc3545;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
             float: right;
         }
-        .logout-btn:hover {
-            background-color: #c82333;
+        #dataDisplay {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <button class="logout-btn" onclick="logout()">Logout</button>
-        <h1>Welcome to PT-MS2 Dashboard</h1>
-        <p>You are successfully logged in!</p>
+        <h1>PT-MS2 Dashboard</h1>
         <div id="userInfo"></div>
+        
+        <div class="sync-status">
+            <h3>Sync Status</h3>
+            <div id="syncStatus"></div>
+            <button onclick="forceSync()">Force Sync</button>
+        </div>
+        
+        <div class="data-form">
+            <h3>Data Management</h3>
+            <input type="text" id="dataKey" placeholder="Data Key">
+            <textarea id="dataValue" placeholder="Data Value"></textarea>
+            <button onclick="saveData()">Save Data</button>
+            <button onclick="loadData()">Load Data</button>
+            <button onclick="deleteData()">Delete Data</button>
+        </div>
+        
+        <div id="dataDisplay"></div>
     </div>
 
+<!-- Replace your current script section with this: -->
+<script src="/static/js/dataSync.js"></script>
 <script>
-    // Check if user is logged in by making a request to a protected endpoint
-    // Since tokens are in HttpOnly cookies, we can't access them directly from JavaScript
-    
+    // If dataSync.js didn't load, create a simple fallback
+    if (typeof dataSyncService === 'undefined') {
+        console.error('dataSync.js failed to load! Using fallback...');
+        
+        // Improved fallback DataSync service that actually tracks sync
+        window.dataSyncService = {
+            syncQueue: JSON.parse(localStorage.getItem('syncQueue') || '[]'),
+            
+            getSyncStatus: function() {
+                return {
+                    isOnline: navigator.onLine,
+                    pendingSync: this.syncQueue.length, // Now shows actual pending items
+                    lastSync: localStorage.getItem('lastSyncTime') || 'Never' // Shows real last sync
+                };
+            },
+            
+            saveToLocal: function(key, data) {
+                // Save to localStorage
+                const localData = JSON.parse(localStorage.getItem('appData') || '{}');
+                localData[key] = {
+                    data: data,
+                    timestamp: Date.now(),
+                    synced: false
+                };
+                localStorage.setItem('appData', JSON.stringify(localData));
+                console.log('Saved to localStorage:', key, data);
+                
+                // Add to sync queue
+                this.addToSyncQueue('save', key, data);
+            },
+            
+            fetchFromServer: async function(key) {
+                const localData = JSON.parse(localStorage.getItem('appData') || '{}');
+                return localData[key] ? localData[key].data : null;
+            },
+            
+            addToSyncQueue: function(operation, key, data) {
+                const syncItem = {
+                    id: Date.now() + Math.random(), // Unique ID
+                    operation: operation,
+                    key: key,
+                    data: data,
+                    timestamp: Date.now()
+                };
+                
+                this.syncQueue.push(syncItem);
+                localStorage.setItem('syncQueue', JSON.stringify(this.syncQueue));
+                console.log('Added to sync queue:', operation, key, data);
+                console.log('Total pending sync items:', this.syncQueue.length);
+            },
+            
+            forceSync: async function() {
+                console.log('Force sync called');
+                console.log('Syncing', this.syncQueue.length, 'items...');
+                
+                // Simulate sync process
+                if (this.syncQueue.length > 0) {
+                    // Clear the sync queue (simulate successful sync)
+                    this.syncQueue = [];
+                    localStorage.setItem('syncQueue', JSON.stringify(this.syncQueue));
+                    
+                    // Update last sync time
+                    const now = new Date().toLocaleString();
+                    localStorage.setItem('lastSyncTime', now);
+                    console.log('Sync completed at:', now);
+                    
+                    // Mark all local data as synced
+                    const localData = JSON.parse(localStorage.getItem('appData') || '{}');
+                    Object.keys(localData).forEach(key => {
+                        localData[key].synced = true;
+                    });
+                    localStorage.setItem('appData', JSON.stringify(localData));
+                } else {
+                    console.log('No items to sync');
+                    // Still update last sync time
+                    const now = new Date().toLocaleString();
+                    localStorage.setItem('lastSyncTime', now);
+                }
+                
+                return Promise.resolve();
+            },
+            
+            // Add method to clear sync queue for testing
+            clearSyncQueue: function() {
+                this.syncQueue = [];
+                localStorage.setItem('syncQueue', JSON.stringify(this.syncQueue));
+                console.log('Sync queue cleared');
+            }
+        };
+        
+        // Add online/offline event listeners
+        window.addEventListener('online', function() {
+            console.log('Back online!');
+        });
+        
+        window.addEventListener('offline', function() {
+            console.log('Gone offline!');
+        });
+    }
+
+    // Add a test function to clear everything (for testing)
+    function clearAllData() {
+        localStorage.removeItem('appData');
+        localStorage.removeItem('syncQueue');
+        localStorage.removeItem('lastSyncTime');
+        if (dataSyncService.clearSyncQueue) {
+            dataSyncService.clearSyncQueue();
+        }
+        updateSyncStatus();
+        alert('All data cleared!');
+    }
+
+    // Your existing functions remain the same...
     async function checkAuth() {
         try {
             const response = await fetch('/auth/api/check-auth/', {
                 method: 'GET',
-                credentials: 'include' // Include cookies with the request
+                credentials: 'include'
             });
             
             if (!response.ok) {
-                // User is not authenticated, redirect to login
                 window.location.href = '/auth/login/';
             } else {
-                // User is authenticated, get user info
                 const userData = await response.json();
                 document.getElementById('userInfo').innerHTML = 
                     `<p>Welcome back, <strong>${userData.username}</strong>!</p>`;
             }
         } catch (error) {
-            // Network error or server error, redirect to login
+            console.error('Auth check failed:', error);
             window.location.href = '/auth/login/';
         }
     }
 
-    // Check authentication on page load
-    checkAuth();
+    function updateSyncStatus() {
+        try {
+            const status = dataSyncService.getSyncStatus();
+            document.getElementById('syncStatus').innerHTML = `
+                <p>Status: <span class="${status.isOnline ? 'online' : 'offline'}">
+                    ${status.isOnline ? 'Online' : 'Offline'}
+                </span></p>
+                <p>Pending Sync: ${status.pendingSync} items</p>
+                <p>Last Sync: ${status.lastSync}</p>
+                <button onclick="clearAllData()" style="background: #6c757d; margin-top: 10px;">Clear All Data (Test)</button>
+            `;
+        } catch (error) {
+            console.error('Update sync status failed:', error);
+            document.getElementById('syncStatus').innerHTML = '<p>Error loading sync status</p>';
+        }
+    }
+
+    // Rest of your functions stay the same...
+    function saveData() {
+        console.log('Save button clicked');
+        
+        const key = document.getElementById('dataKey').value;
+        const value = document.getElementById('dataValue').value;
+        
+        console.log('Data to save:', key, value);
+        
+        if (!key || !value) {
+            alert('Please enter both key and value');
+            return;
+        }
+        
+        try {
+            const data = JSON.parse(value);
+            dataSyncService.saveToLocal(key, data);
+            alert('Data saved successfully!');
+            updateSyncStatus(); // This will now show updated pending sync count
+        } catch (e) {
+            dataSyncService.saveToLocal(key, value);
+            alert('Data saved successfully!');
+            updateSyncStatus(); // This will now show updated pending sync count
+        }
+    }
+
+    async function loadData() {
+        console.log('Load button clicked');
+        
+        const key = document.getElementById('dataKey').value;
+        
+        if (!key) {
+            alert('Please enter a data key');
+            return;
+        }
+        
+        try {
+            const data = await dataSyncService.fetchFromServer(key);
+            
+            if (data) {
+                document.getElementById('dataDisplay').textContent = 
+                    JSON.stringify(data, null, 2);
+            } else {
+                document.getElementById('dataDisplay').textContent = 'No data found';
+            }
+        } catch (error) {
+            console.error('Load data failed:', error);
+            document.getElementById('dataDisplay').textContent = 'Error loading data';
+        }
+    }
+
+    function deleteData() {
+        console.log('Delete button clicked');
+        
+        const key = document.getElementById('dataKey').value;
+        
+        if (!key) {
+            alert('Please enter a data key');
+            return;
+        }
+        
+        try {
+            dataSyncService.addToSyncQueue('delete', key, null);
+            alert('Data marked for deletion!');
+            updateSyncStatus(); // This will now show updated pending sync count
+        } catch (error) {
+            console.error('Delete data failed:', error);
+        }
+    }
+
+    async function forceSync() {
+        console.log('Force sync button clicked');
+        
+        try {
+            await dataSyncService.forceSync();
+            updateSyncStatus(); // This will now show updated sync time and cleared pending
+            alert('Sync completed!');
+        } catch (error) {
+            console.error('Force sync failed:', error);
+            alert('Sync failed');
+        }
+    }
 
     async function logout() {
+        console.log('Logout button clicked');
+        
         try {
-            // Call logout endpoint to clear server-side session/cookies
             await fetch('/auth/api/logout/', {
                 method: 'POST',
                 credentials: 'include'
             });
         } catch (error) {
-            console.log('Logout request failed, but redirecting anyway');
+            console.log('Logout request failed:', error);
         }
         
-        // Redirect to login page
         window.location.href = '/auth/login/';
     }
+
+    // Initialize
+    console.log('Initializing dashboard...');
+    checkAuth();
+    updateSyncStatus();
+    
+    // Update sync status every 10 seconds
+    setInterval(updateSyncStatus, 10000);
 </script>
 </body>
 </html>

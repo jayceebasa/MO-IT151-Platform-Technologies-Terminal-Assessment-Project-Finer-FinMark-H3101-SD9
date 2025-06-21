@@ -1,3 +1,4 @@
+import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -182,3 +183,97 @@ class LogoutView(APIView):
         response.delete_cookie('refresh_token')
         
         return response
+
+
+class SyncSaveView(APIView):
+    def post(self, request):
+        # Get token from cookie for authentication
+        token = request.COOKIES.get('access_token')
+        
+        if not token:
+            return Response({"error": "Authentication required"}, status=401)
+        
+        try:
+            # Verify token
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            user = User.objects.get(id=user_id)
+            
+            # Get data from request
+            key = request.data.get('key')
+            data = request.data.get('data')
+            
+            if not key:
+                return Response({"error": "Key is required"}, status=400)
+            
+            # Save to database or file (simple file storage for this example)
+            sync_data_path = os.path.join(settings.BASE_DIR, 'sync_data', f'user_{user_id}')
+            os.makedirs(sync_data_path, exist_ok=True)
+            
+            file_path = os.path.join(sync_data_path, f'{key}.json')
+            with open(file_path, 'w') as f:
+                json.dump(data, f)
+            
+            return Response({"message": "Data synced successfully"})
+            
+        except Exception as e:
+            return Response({"error": "Sync failed"}, status=500)
+
+class SyncGetView(APIView):
+    def get(self, request, key):
+        # Get token from cookie for authentication
+        token = request.COOKIES.get('access_token')
+        
+        if not token:
+            return Response({"error": "Authentication required"}, status=401)
+        
+        try:
+            # Verify token
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            user = User.objects.get(id=user_id)
+            
+            # Get data from file
+            file_path = os.path.join(settings.BASE_DIR, 'sync_data', f'user_{user_id}', f'{key}.json')
+            
+            if os.path.exists(file_path):
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
+                return Response(data)
+            else:
+                return Response({"error": "Data not found"}, status=404)
+            
+        except Exception as e:
+            return Response({"error": "Fetch failed"}, status=500)
+
+class SyncDeleteView(APIView):
+    def post(self, request):
+        # Get token from cookie for authentication
+        token = request.COOKIES.get('access_token')
+        
+        if not token:
+            return Response({"error": "Authentication required"}, status=401)
+        
+        try:
+            # Verify token
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            user = User.objects.get(id=user_id)
+            
+            # Get key from request
+            key = request.data.get('key')
+            
+            if not key:
+                return Response({"error": "Key is required"}, status=400)
+            
+            # Delete file
+            file_path = os.path.join(settings.BASE_DIR, 'sync_data', f'user_{user_id}', f'{key}.json')
+            
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                return Response({"message": "Data deleted successfully"})
+            else:
+                return Response({"error": "Data not found"}, status=404)
+            
+        except Exception as e:
+            return Response({"error": "Delete failed"}, status=500)
