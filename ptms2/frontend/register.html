@@ -31,7 +31,7 @@
             margin-bottom: 5px;
             color: #555;
         }
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="email"], input[type="password"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -184,9 +184,9 @@
                 <small class="help-text">3-30 characters, letters, numbers, underscore, or hyphen. Must start with a letter.</small>
             </div>
             <div class="form-group">
-                <label for="email">Email (Optional):</label>
-                <input type="email" id="email" name="email" autocomplete="email">
-                <small class="help-text">Optional but recommended for account recovery</small>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required autocomplete="email">
+                <small class="help-text">Required for account recovery and notifications</small>
             </div>
             <div class="form-group">
                 <label for="password">Password:</label>
@@ -238,10 +238,8 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             confirm_password: confirmPassword
         };
         
-        // Add email if provided
-        if (email) {
-            requestData.email = email;
-        }
+        // Add email to request data (now required)
+        requestData.email = email;
         
         const response = await fetch('/auth/api/register/', {
             method: 'POST',
@@ -258,9 +256,9 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             
             // Add success styling
             document.getElementById('username').classList.add('input-success');
+            document.getElementById('email').classList.add('input-success');
             document.getElementById('password').classList.add('input-success');
             document.getElementById('confirmPassword').classList.add('input-success');
-            if (email) document.getElementById('email').classList.add('input-success');
             
             // Reset form and redirect to login after delay
             setTimeout(() => {
@@ -271,9 +269,9 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             
             // Add error styling to inputs
             document.getElementById('username').classList.add('input-error');
+            document.getElementById('email').classList.add('input-error');
             document.getElementById('password').classList.add('input-error');
             document.getElementById('confirmPassword').classList.add('input-error');
-            if (email) document.getElementById('email').classList.add('input-error');
         }
     } catch (error) {
         console.error('Registration error:', error);
@@ -309,8 +307,11 @@ function validateForm(username, email, password, confirmPassword) {
         isValid = false;
     }
     
-    // Email validation (optional)
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    // Email validation (now required)
+    if (!email) {
+        showFieldError('email', 'Email is required');
+        isValid = false;
+    } else if (!isValidEmail(email)) {
         showFieldError('email', 'Please enter a valid email address');
         isValid = false;
     }
@@ -332,6 +333,77 @@ function validateForm(username, email, password, confirmPassword) {
     }
     
     return isValid;
+}
+
+// Enhanced email validation function
+function isValidEmail(email) {
+    // Basic format check
+    const basicEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!basicEmailRegex.test(email)) {
+        return false;
+    }
+    
+    // More comprehensive email validation
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    
+    if (!emailRegex.test(email)) {
+        return false;
+    }
+    
+    // Additional checks
+    if (email.length > 254) {
+        return false; // RFC 5321 limit
+    }
+    
+    // Check for consecutive dots
+    if (email.includes('..')) {
+        return false;
+    }
+    
+    // Check for dot at start or end
+    if (email.startsWith('.') || email.endsWith('.')) {
+        return false;
+    }
+    
+    // Split and validate local and domain parts
+    const [localPart, domainPart] = email.split('@');
+    
+    // Local part validation (before @)
+    if (localPart.length > 64) {
+        return false; // RFC 5321 limit
+    }
+    
+    // Domain part validation (after @)
+    if (domainPart.length > 253) {
+        return false;
+    }
+    
+    // Check for valid domain structure
+    const domainParts = domainPart.split('.');
+    if (domainParts.length < 2) {
+        return false;
+    }
+    
+    // Check each domain part
+    for (const part of domainParts) {
+        if (part.length === 0 || part.length > 63) {
+            return false;
+        }
+        if (part.startsWith('-') || part.endsWith('-')) {
+            return false;
+        }
+        if (!/^[a-zA-Z0-9-]+$/.test(part)) {
+            return false;
+        }
+    }
+    
+    // Check TLD (last part should be at least 2 characters and contain only letters)
+    const tld = domainParts[domainParts.length - 1];
+    if (tld.length < 2 || !/^[a-zA-Z]+$/.test(tld)) {
+        return false;
+    }
+    
+    return true;
 }
 
 // Password strength validation
@@ -479,8 +551,11 @@ document.getElementById('email').addEventListener('input', function() {
         existingError.remove();
     }
     
-    if (!email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (email && isValidEmail(email)) {
         this.classList.add('input-success');
+    } else if (email) {
+        // Show error styling only if there's input but it's invalid
+        this.classList.add('input-error');
     }
 });
 
