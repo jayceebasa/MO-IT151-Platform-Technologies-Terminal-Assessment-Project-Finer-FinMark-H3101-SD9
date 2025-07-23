@@ -109,6 +109,48 @@
             flex: 1;
         }
 
+        .dashboard-section {
+            background: rgba(255,255,255,0.97);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            padding: 3rem 2rem;
+            margin: 3rem auto;
+            max-width: 1200px;
+        }
+        .dashboard-title {
+            text-align: center;
+            font-size: 2.2rem;
+            color: #333;
+            margin-bottom: 2.5rem;
+            font-weight: 700;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.09);
+            padding: 2rem 1.5rem 1.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .chart-title {
+            font-size: 1.2rem;
+            color: #764ba2;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        @media (max-width: 900px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .hero {
             text-align: center;
             padding: 4rem 0;
@@ -255,6 +297,59 @@
                 align-items: center;
             }
         }
+        /* Payroll Table Styles */
+        .payroll-table-section {
+            margin-top: 2.5rem;
+        }
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        .payroll-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            font-size: 1rem;
+            margin-bottom: 0;
+        }
+        .payroll-table th, .payroll-table td {
+            padding: 0.85rem 1.2rem;
+            text-align: left;
+        }
+        .payroll-table th {
+            background: #f5f5fa;
+            color: #764ba2;
+            font-weight: 700;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .payroll-table td {
+            border-bottom: 1px solid #ececec;
+        }
+        .payroll-table tr:last-child td {
+            border-bottom: none;
+        }
+        .status-paid {
+            background: #28a745;
+            color: #fff;
+            padding: 0.3em 0.9em;
+            border-radius: 12px;
+            font-size: 0.98em;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        @media (max-width: 600px) {
+            .payroll-table th, .payroll-table td {
+                padding: 0.6rem 0.5rem;
+                font-size: 0.95em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -271,12 +366,99 @@
     <main>
         <section class="hero">
             <div class="container">
-                <h1>Welcome to PT-MS2</h1>
-                
                 <div id="authStatus" class="auth-status">
                     <div class="welcome-message">
                         <span id="welcomeText">Welcome!</span>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-section">
+            <div class="dashboard-title">Payroll Dashboard Overview</div>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Monthly Payroll Expenses (₱)</div>
+                    <canvas id="payrollExpensesChart" width="320" height="220"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Employee Count by Department</div>
+                    <canvas id="employeeDeptChart" width="320" height="220"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Salary Distribution</div>
+                    <canvas id="salaryDistChart" width="320" height="220"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Top 5 Overtime Earners</div>
+                    <canvas id="overtimeEarnersChart" width="320" height="220"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Gender Distribution</div>
+                    <canvas id="genderDistChart" width="320" height="220"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Monthly Deductions Breakdown</div>
+                    <canvas id="deductionsChart" width="320" height="220"></canvas>
+                </div>
+            </div>
+            <div class="payroll-table-section">
+                <div class="table-title">Recent Payroll Transactions</div>
+                <div class="table-wrapper">
+                    <table class="payroll-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Employee</th>
+                                <th>Gross Pay</th>
+                                <th>Deductions</th>
+                                <th>Net Pay</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-07-15</td>
+                                <td>J. Santos</td>
+                                <td>₱45,000</td>
+                                <td>₱6,200</td>
+                                <td>₱38,800</td>
+                                <td><span class="status-paid">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-15</td>
+                                <td>M. Cruz</td>
+                                <td>₱38,000</td>
+                                <td>₱5,800</td>
+                                <td>₱32,200</td>
+                                <td><span class="status-paid">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-15</td>
+                                <td>A. Reyes</td>
+                                <td>₱41,500</td>
+                                <td>₱6,000</td>
+                                <td>₱35,500</td>
+                                <td><span class="status-paid">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-15</td>
+                                <td>L. Dela Rosa</td>
+                                <td>₱36,000</td>
+                                <td>₱5,200</td>
+                                <td>₱30,800</td>
+                                <td><span class="status-paid">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-15</td>
+                                <td>K. Tan</td>
+                                <td>₱39,000</td>
+                                <td>₱5,500</td>
+                                <td>₱33,500</td>
+                                <td><span class="status-paid">Paid</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -289,6 +471,8 @@
         </div>
     </footer>
 
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Check authentication status
         async function checkAuth() {
@@ -296,7 +480,6 @@
                 const response = await fetch('/auth/api/check-auth/', {
                     credentials: 'include'
                 });
-                
                 if (response.ok) {
                     const data = await response.json();
                     if (data.authenticated) {
@@ -328,7 +511,6 @@
                     method: 'POST',
                     credentials: 'include'
                 });
-                
                 if (response.ok) {
                     // Redirect to login page after logout
                     window.location.href = '/auth/login/';
@@ -344,8 +526,172 @@
             }
         }
 
+        // Chart.js graphs for mock payroll data
+        window.addEventListener('DOMContentLoaded', function() {
+            // Gender Distribution (Pie Chart)
+            new Chart(document.getElementById('genderDistChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: ['Male', 'Female', 'Other'],
+                    datasets: [{
+                        data: [38, 32, 2],
+                        backgroundColor: ['#667eea', '#ffb347', '#764ba2'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { color: '#333', font: { size: 13 } }
+                        }
+                    }
+                }
+            });
+
+            // Monthly Deductions Breakdown (Stacked Bar)
+            new Chart(document.getElementById('deductionsChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [
+                        {
+                            label: 'SSS',
+                            data: [1200, 1250, 1230, 1300, 1280, 1350, 1400, 1380, 1420, 1450, 1500, 1550],
+                            backgroundColor: '#764ba2'
+                        },
+                        {
+                            label: 'PhilHealth',
+                            data: [800, 850, 830, 900, 880, 950, 1000, 980, 1020, 1050, 1100, 1150],
+                            backgroundColor: '#28a745'
+                        },
+                        {
+                            label: 'Pag-IBIG',
+                            data: [400, 420, 410, 430, 420, 440, 450, 440, 460, 470, 480, 490],
+                            backgroundColor: '#667eea'
+                        },
+                        {
+                            label: 'Tax',
+                            data: [3800, 3900, 3850, 4000, 3980, 4100, 4200, 4180, 4250, 4300, 4400, 4500],
+                            backgroundColor: '#ffb347'
+                        }
+                    ]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { color: '#333', font: { size: 13 } }
+                        }
+                    },
+                    responsive: true,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    }
+                }
+            });
+            // Payroll Expenses (Line Chart)
+            new Chart(document.getElementById('payrollExpensesChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Payroll Expenses',
+                        data: [120000, 125000, 123500, 130000, 128000, 135000, 140000, 138000, 142000, 145000, 150000, 155000],
+                        borderColor: '#764ba2',
+                        backgroundColor: 'rgba(118,75,162,0.08)',
+                        tension: 0.4,
+                        pointBackgroundColor: '#28a745',
+                        pointRadius: 4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+
+            // Employee Count by Department (Bar Chart)
+            new Chart(document.getElementById('employeeDeptChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['HR', 'Finance', 'IT', 'Operations', 'Sales', 'Marketing', 'Admin'],
+                    datasets: [{
+                        label: 'Employees',
+                        data: [8, 12, 20, 15, 18, 10, 6],
+                        backgroundColor: [
+                            '#764ba2', '#667eea', '#28a745', '#ffb347', '#ff6666', '#36a2eb', '#a3e635'
+                        ],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    indexAxis: 'y',
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Salary Distribution (Doughnut Chart)
+            new Chart(document.getElementById('salaryDistChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['₱10k-₱20k', '₱20k-₱30k', '₱30k-₱40k', '₱40k-₱50k', '₱50k+'],
+                    datasets: [{
+                        data: [15, 28, 22, 10, 5],
+                        backgroundColor: [
+                            '#764ba2', '#667eea', '#28a745', '#ffb347', '#ff6666'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { color: '#333', font: { size: 13 } }
+                        }
+                    }
+                }
+            });
+
+            // Top 5 Overtime Earners (Horizontal Bar)
+            new Chart(document.getElementById('overtimeEarnersChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['J. Santos', 'M. Cruz', 'A. Reyes', 'L. Dela Rosa', 'K. Tan'],
+                    datasets: [{
+                        label: 'Overtime Pay (₱)',
+                        data: [12000, 10500, 9800, 9500, 9000],
+                        backgroundColor: '#28a745',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    indexAxis: 'y',
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+        });
+
         // Check auth status on page load
         checkAuth();
     </script>
-</body>
-</html>
